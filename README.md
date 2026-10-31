@@ -27,44 +27,27 @@ Out of scope: an admin web UI, splitting into microservices, and running it as a
 ## Architecture
 
 ```mermaid
-flowchart TB
-    subgraph clients["Clients"]
-        sdk["Apps using OpenAI SDKs"]
-        agent["Agents (send X-Run-Id)"]
-        admin["Admin (curl / Postman)"]
-    end
-
-    subgraph gw["llm-gateway: Spring Boot on virtual threads"]
-        auth["① Auth"] --> limit["② Rate limit"] --> reserve["③ Reserve quota"] --> route["④ Route"] --> proxy["⑤ Proxy"] --> settle["⑥ Settle"] --> emit["⑦ Emit usage"]
-        adminApi["Admin API"]
-        jobs["Refund and reconciliation jobs"]
-    end
-
-    subgraph upstreams["Upstreams"]
-        mock["mock-llm"]
-        provider["OpenAI-compatible providers"]
-    end
-
-    redis[("Redis: key cache, limits, quota")]
-    kafka[["Kafka: usage events"]]
+flowchart LR
+    clients["Clients<br/>OpenAI SDKs, agents"]
+    admin["Admin<br/>curl / Postman"]
+    gw["llm-gateway<br/>① auth ② rate limit ③ reserve quota<br/>④ route ⑤ proxy ⑥ settle ⑦ emit usage"]
+    upstreams["Upstreams<br/>mock-llm, OpenAI-compatible providers"]
+    redis[("Redis<br/>key cache, limits, quota")]
+    kafka[["Kafka<br/>usage events"]]
     consumer["Usage consumer"]
-    mysql[("MySQL: keys, ledger, usage log")]
+    mysql[("MySQL<br/>keys, ledger, usage log")]
     metrics["Prometheus + Grafana"]
 
-    sdk --> auth
-    agent --> auth
-    admin --> adminApi
-    proxy -->|"HTTP / SSE"| mock
-    proxy -->|"HTTP / SSE"| provider
-    proxy -.->|"chunks streamed back"| clients
-    reserve -->|"atomic Lua"| redis
-    settle -->|"refund or charge the difference"| redis
-    jobs --> redis
-    emit -.->|"async"| kafka
+    clients -->|"chat completions"| gw
+    gw -.->|"SSE chunks"| clients
+    admin -->|"admin API"| gw
+    gw -->|"HTTP / SSE"| upstreams
+    gw -->|"atomic Lua"| redis
+    gw -.->|"async"| kafka
     kafka -.-> consumer
     consumer -->|"batch, idempotent"| mysql
-    adminApi --> mysql
-    metrics -->|"scrape"| gw
+    gw -->|"keys, top-ups"| mysql
+    gw -->|"metrics"| metrics
 ```
 
 ## How a request flows
