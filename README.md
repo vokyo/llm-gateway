@@ -38,8 +38,7 @@ flowchart LR
     mysql[("MySQL<br/>keys, ledger, usage log")]
     metrics["Prometheus + Grafana"]
 
-    clients -->|"chat completions"| gw
-    gw -.->|"SSE chunks"| clients
+    clients <-->|"requests / SSE stream"| gw
     admin -->|"admin API"| gw
     gw -->|"HTTP / SSE"| upstreams
     gw -->|"atomic Lua"| redis
