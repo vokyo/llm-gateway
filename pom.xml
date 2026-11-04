@@ -15,6 +15,7 @@
     <name>llm-gateway</name>
     <modules>
         <module>gateway</module>
+        <module>mock-llm</module>
     </modules>
     <properties>
         <java.version>25</java.version>
