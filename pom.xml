@@ -13,6 +13,9 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>llm-gateway</name>
+    <modules>
+        <module>gateway</module>
+    </modules>
     <properties>
         <java.version>25</java.version>
     </properties>
