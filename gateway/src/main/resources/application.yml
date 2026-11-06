@@ -1,2 +1,17 @@
 server:
   port: 8090
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/llm_gateway
+    username: gateway
+    password: gateway
+  data:
+    redis:
+      host: localhost
+      port: 6380
+
+management:
+  endpoint:
+    health:
+      show-details: always
